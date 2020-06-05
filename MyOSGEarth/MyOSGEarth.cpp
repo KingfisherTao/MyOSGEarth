@@ -14,6 +14,9 @@
 #include "MyMeasureToolCallback.h"
 #include "PickEvent.h"
 
+#include <osg/LineWidth>
+#include <osgEarth/GLUtils>
+
 int main(int argc, char** argv)
 {
 	osgViewer::CompositeViewer viewer;
@@ -27,7 +30,7 @@ int main(int argc, char** argv)
 	osgEarth::Util::MapNodeHelper().configureView(view);
 
 	osg::ref_ptr<osg::Group> m_world = new osg::Group();
-	osg::ref_ptr<osgEarth::MapNode> m_mapNode = osgEarth::MapNode::findMapNode(osgDB::readNodeFile("World.earth"));
+	osg::ref_ptr<osgEarth::MapNode> m_mapNode = osgEarth::MapNode::findMapNode(osgDB::readNodeFile("D:\\Qt\\MyOSGEarthQT\\data\\myWorld.earth"));
 	m_world->addChild(m_mapNode.get());
 
 	// 近地面自动裁剪
@@ -85,17 +88,61 @@ int main(int argc, char** argv)
 
 	//view->addEventHandler(measureTool);
 
-	canvas->addControl(grid);
+	//canvas->addControl(grid);
 	view->addEventHandler(new osgEarth::Util::MouseCoordsTool(m_mapNode, mouseLabel));
 
 	PickEvent* _pickEvent = new PickEvent(m_mapNode.get(), _losGroup);
 	_pickEvent->setActionEvent(EnumActionEvent::ViewshedAnalysis);
 	view->addEventHandler(_pickEvent);
 
+	//87.43, 27.18, 2060.66;
+	//257233 5.67593e+06 2.8931e+06
+	//255550 5.67497e+06 2.89533e+06
+	// world x = 256556 y = 5.67549e+06 z = 2.89406e+06
+
+	//osg::Vec3 start = osg::Vec3(256493, 5.67695e+06, 2.89058e+06);
+	//osg::Vec3 hit = osg::Vec3(254839, 5.67553e+06, 2.89362e+06);
+	//osg::Vec3 end = osg::Vec3(252068, 5.67457e+06, 2.89666e+06);
+
+	//osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+	//osg::ref_ptr<osg::Geometry> gy = new osg::Geometry;
+	//osg::ref_ptr<osg::Vec3Array> coords = new osg::Vec3Array;
+
+	//geode->addDrawable(gy);
+	//gy->setVertexArray(coords);
+	//gy->setUseVertexBufferObjects(true);
+
+	//设置颜色数组
+	osg::ref_ptr<osg::Vec4Array> vc = new osg::Vec4Array(osg::Array::BIND_PER_VERTEX);
+	vc->reserve(2 * 5);
+
+	//coords->push_back(start);
+	//coords->push_back(end);
+	//coords->push_back(hit);
+
+
+	//coords->push_back(start);
+	//vc->push_back(osg::Vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	//coords->push_back(hit);
+	//vc->push_back(osg::Vec4(0.0f, 1.0f, 0.0f, 1.0f));
+
+	//coords->push_back(hit);
+	//vc->push_back(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	//coords->push_back(end);
+	//vc->push_back(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+	//
+	//gy->setColorArray(vc.get());
+	//geode->getOrCreateStateSet()->setAttribute(new osg::LineWidth(4.0));
+	//gy->addPrimitiveSet(new osg::DrawArrays(GL_LINE_STRIP, 0, coords->size()));
+	//osgEarth::GLUtils::setLighting(gy->getOrCreateStateSet(), osg::StateAttribute::OFF);
+
+	//m_world->addChild(geode);
+
 	view->setSceneData(m_world);
 
-	osg::ref_ptr<osgEarth::Util::EarthManipulator> em = dynamic_cast<osgEarth::Util::EarthManipulator*>(view->getCameraManipulator());
-	em->setViewpoint(osgEarth::Viewpoint(NULL, 87.43, 27.18, 2060.66, -2.5, -10, 20000), 2);
+	//osg::ref_ptr<osgEarth::Util::EarthManipulator> em = dynamic_cast<osgEarth::Util::EarthManipulator*>(view->getCameraManipulator());
+	//em->setViewpoint(osgEarth::Viewpoint(NULL, 87.43, 27.18, 2060.66, -2.5, -10, 20000), 2);
 
 	viewer.addView(view);
 	return viewer.run();

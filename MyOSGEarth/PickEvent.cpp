@@ -1,7 +1,8 @@
 ﻿#include "PickEvent.h"
 
+
 PickEvent::PickEvent(osgEarth::MapNode* mapNode, osg::Group* losGroup) :
-	m_ActionEvent(EnumActionEvent::ViewshedAnalysis),
+	m_ActionEvent(EnumActionEvent::ActionNull),
 	m_mapNode(mapNode),
 	m_losGroup(losGroup),
 	m_bFirstClick(false),
@@ -12,7 +13,7 @@ PickEvent::PickEvent(osgEarth::MapNode* mapNode, osg::Group* losGroup) :
 	// 剖面计算器
 	m_Calculator = new osgEarth::Util::TerrainProfileCalculator(m_mapNode);
 
-	// m_curRosNode = NULL;
+	//m_curRosNode = NULL;
 
 	m_Group = new osg::Group();
 	m_mapNode->addChild(m_Group);
@@ -30,7 +31,7 @@ PickEvent::PickEvent(osgEarth::MapNode* mapNode, osg::Group* losGroup) :
 
 	osgEarth::Symbology::AltitudeSymbol* alt = m_feature->style()->getOrCreate<osgEarth::Symbology::AltitudeSymbol>();
 	alt->clamping() = alt->CLAMP_TO_TERRAIN;
-	alt->technique() = alt->TECHNIQUE_GPU;
+	alt->technique() = alt->TECHNIQUE_DRAPE;
 
 	osgEarth::Symbology::RenderSymbol* render = m_feature->style()->getOrCreate<osgEarth::Symbology::RenderSymbol>();
 	render->depthOffset()->enabled() = true;
@@ -38,11 +39,9 @@ PickEvent::PickEvent(osgEarth::MapNode* mapNode, osg::Group* losGroup) :
 
 	osgEarth::Symbology::LineSymbol* ls = m_feature->style()->getOrCreate<osgEarth::Symbology::LineSymbol>();
 	ls->stroke()->color() = osgEarth::Color(osgEarth::Color::Yellow, 1.0f);
-	ls->stroke()->width() = 2.0f;
-	//ls->stroke()->stipple() = 255;
-	ls->tessellation() = 150;
+	ls->stroke()->width() = 1.0f;
 
-	m_featureNode = new osgEarth::Annotation::FeatureNode(m_feature.get());
+	m_featureNode = new osgEarth::Annotation::FeatureNode(m_feature);
 	m_Group->addChild(m_featureNode.get());
 
 	m_pFA = NULL;
@@ -170,7 +169,8 @@ void PickEvent::pickLeft(osg::Vec3d Point)
 			auto _end = osgEarth::GeoPoint(m_spatRef->getGeographicSRS(), Point, osgEarth::AltitudeMode::ALTMODE_ABSOLUTE);
 			auto _angle = osgEarth::GeoMath::bearing(osg::DegreesToRadians(_start.y()), osg::DegreesToRadians(_start.x()),
 				osg::DegreesToRadians(_end.y()), osg::DegreesToRadians(_end.x()));
-			m_pLT = new DrawLineCallback(LastPoint, _angle, osgEarth::GeoMath::distance(LastPoint, Point, m_spatRef), 100.0, m_losHeight, m_mapNode);
+
+			m_pLT = new DrawLineCallback(LastPoint, _angle, osgEarth::GeoMath::distance(LastPoint, Point, m_spatRef), 150.0, m_losHeight, m_mapNode);
 			m_losGroup->addChild(m_pLT->get());
 			m_vLT.push_back(m_pLT);
 
@@ -207,9 +207,8 @@ void PickEvent::pickMove(osg::Vec3d Point)
 	{
 		if (!m_bFirstClick)
 		{
-			osgEarth::GeoPoint _end(m_spatRef->getGeographicSRS(), Point.x(), Point.y(), 0, osgEarth::AltitudeMode::ALTMODE_RELATIVE);
+			osgEarth::GeoPoint _end(m_spatRef->getGeographicSRS(), Point.x(), Point.y(), 0.0, osgEarth::AltitudeMode::ALTMODE_RELATIVE);
 			m_curLosNode->setEnd(_end);
-
 		}
 	}break;
 	// 视域分析
@@ -219,7 +218,7 @@ void PickEvent::pickMove(osg::Vec3d Point)
 		{
 			auto _dis = osgEarth::GeoMath::distance(FirstPoint, Point, m_spatRef);
 			m_curCircleNode->setRadius(_dis);
-			//m_curRosNode->setRadius(dis);
+			//m_curRosNode->setRadius(_dis);
 			m_pFA->setRadius(_dis);
 			if (!m_bLastPoint)
 			{
@@ -231,7 +230,7 @@ void PickEvent::pickMove(osg::Vec3d Point)
 				m_feature->getGeometry()->back() = osg::Vec3d(Point.x(), Point.y(), 0);
 			}
 
-			m_featureNode->init();
+			m_featureNode->dirty();
 		}
 
 	}break;
@@ -268,15 +267,15 @@ void PickEvent::RemoveAnalysis()
 	m_pFA->clear();
 
 	m_vLT.clear();
-	//m_vLT.swap(std::vector<DrawLineCallback*>());
+	//	m_vLT.swap(std::vector<DrawLineCallback*>());
 
-	//for (std::vector<DrawCircleThread*>::iterator ite = m_vCT.begin(); ite != m_vCT.end(); ++ite)
-	//{
-	//	(*ite)->clear();
-	//	delete *ite;
-	//}
-	//m_vCT.clear();
-	//m_vCT.swap(std::vector<DrawCircleThread*>());
+	//	for (std::vector<DrawCircleThread*>::iterator ite = m_vCT.begin(); ite != m_vCT.end(); ++ite)
+	//	{
+	//		(*ite)->clear();
+	//		delete *ite;
+	//	}
+	//	m_vCT.clear();
+	//	m_vCT.swap(std::vector<DrawCircleThread*>());
 }
 
 osg::Vec3d PickEvent::Screen2Geo(float x, float y)
